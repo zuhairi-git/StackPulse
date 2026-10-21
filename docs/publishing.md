@@ -15,6 +15,12 @@ Do not publish the unbuilt Vite source directly using “Deploy from a branch.�
 
 ## Commands
 
+### Manual artifact-branch publishing
+
+If GitHub cannot register or execute the custom workflow, run `npm run deploy:pages` with authenticated Git and GitHub CLI. This builds and verifies the app, updates a dedicated `gh-pages` branch with only `dist/` contents, configures Pages to publish that branch, and requests a build. Existing custom domains are preserved. Subsequent updates use the same command. It never force-pushes and refuses to overwrite an unrelated `gh-pages` branch.
+
+In this mode, Pages Settings shows **Deploy from a branch → gh-pages → /(root)**. This is safe because that branch contains compiled output. The `main` branch remains application source. To switch back to automated publishing later, select **GitHub Actions** and run `.github/workflows/pages.yml`; do not run the manual publisher afterward, since it explicitly selects artifact-branch hosting.
+
 | Command | Result |
 | --- | --- |
 | `npm run build` | Build for the default target in `publishing.config.json` (initially root-hosted static). |

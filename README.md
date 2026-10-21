@@ -18,7 +18,7 @@ npm run preview
 
 The production output is `dist/`. Root hosting and subdirectory hosting (including GitHub project Pages) are supported through `publishing.config.json`. Use `npm run build:pages` for the configured GitHub repository, or `npm run build` for the default root-hosted target. No provider secrets or server functions are needed. The offline shell is generated only for production builds. The dev server intentionally does not install a service worker.
 
-See [Publishing StackPulse](docs/publishing.md) for the GitHub Actions workflow, one-time Pages setup, reusable publishing functions, host migration, and 404 troubleshooting. GitHub Pages must use **GitHub Actions** as its publishing source so Vite is built before deployment.
+See [Publishing StackPulse](docs/publishing.md) for reusable publishing functions, host migration, and 404 troubleshooting. `npm run deploy:pages` builds and publishes compiled output to a dedicated `gh-pages` branch using authenticated Git and GitHub CLI. A GitHub Actions workflow is also included for automated deployment when available. Never publish the unbuilt `main` branch directly.
 
 ## What the MVP monitors
 

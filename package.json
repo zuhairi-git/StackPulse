@@ -8,6 +8,7 @@
     "build": "node scripts/publish.mjs build",
     "build:pages": "node scripts/publish.mjs build --target github-pages",
     "publish:verify": "node scripts/publish.mjs verify",
+    "deploy:pages": "node scripts/deploy-pages-branch.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "check": "tsc -b && vitest run"
