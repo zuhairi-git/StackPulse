@@ -1,0 +1,7 @@
+{
+  "defaultTarget": "static",
+  "targets": {
+    "static": { "basePath": "/" },
+    "github-pages": { "repository": "zuhairi-git/StackPulse" }
+  }
+}

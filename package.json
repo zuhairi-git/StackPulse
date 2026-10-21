@@ -1,0 +1,29 @@
+{
+  "name": "stackpulse",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "node scripts/publish.mjs build",
+    "build:pages": "node scripts/publish.mjs build --target github-pages",
+    "publish:verify": "node scripts/publish.mjs verify",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "check": "tsc -b && vitest run"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "fake-indexeddb": "^6.2.0",
+    "typescript": "~5.8.3",
+    "vite": "^6.4.1",
+    "vitest": "^5.0.5"
+  }
+}
