@@ -9,7 +9,7 @@ StackPulse publishes as a static `dist/` artifact. The publishing foundation sep
 3. Commit and push the source and `.github/workflows/pages.yml` to the default branch. The workflow builds, tests, verifies, uploads `dist/`, and deploys it. It can also be run manually from Actions on the default branch.
 4. Use the URL reported by the `deploy` job. For `zuhairi-git/StackPulse` without a custom domain, this is `https://zuhairi-git.github.io/StackPulse/`.
 
-**Local checkout mismatch discovered during setup:** the application lives in `C:/Users/zohai/Documents/GitHub/StackPulse`, but the connected GitHub checkout is `C:/Users/zohai/Documents/GitHub/StackPulse/StackPulse` and currently contains only `.gitattributes`. Publishing that nested checkout does not publish this application. Open/publish the application root as your repository, or relocate the application source into the connected checkout before committing. Keep one authoritative source tree; do not maintain two copies. The implementation does not move Git metadata, change remotes, commit, or push on your behalf.
+The authoritative checkout is `C:/Users/zohai/Documents/GitHub/StackPulse`, connected to `zuhairi-git/StackPulse`. An earlier nested checkout containing only `.gitattributes` has been consolidated into this application root. Use this root for future commits and pushes.
 
 Do not publish the unbuilt Vite source directly using “Deploy from a branch.” `index.html` in the deployed artifact must reference compiled JavaScript. No provider API keys or other application secrets belong in repository settings: all provider connections remain device-local.
 
