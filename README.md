@@ -2,7 +2,7 @@
 
 **Your infrastructure. One pulse.**
 
-A lightweight, local-first React + TypeScript + Vite PWA for independent Vercel, Neon, and Cloudflare connections. No application backend, analytics, cloud credential storage, or provider SDKs. The initial screen is an honest empty workspace; there is no mock account data.
+A lightweight, local-first React + TypeScript + Vite PWA for independent Vercel, Neon, and Cloudflare connections. Guest mode needs no backend. Optional Google accounts sync connection fields only, with owner activation and no database snapshots. See [account setup](docs/accounts.md). The initial screen is an honest empty workspace; there is no mock account data.
 
 ## Run locally
 
@@ -28,7 +28,7 @@ See [Publishing StackPulse](docs/publishing.md) for reusable publishing function
 | Neon | `GET https://console.neon.tech/api/v2/projects?limit=20` | First 20 projects and regions; optional organization scope | OPTIONS returned 204 without an allow-origin header for localhost. Direct browser access was unavailable in this check. |
 | Cloudflare | `GET https://api.cloudflare.com/client/v4/zones?per_page=20` | First 20 zones and reported zone status; optional account scope | OPTIONS returned 400 without an allow-origin header for localhost. Direct browser access was unavailable in this check. |
 
-Neon and Cloudflare require a browser capability check before accepting a new credential. This uses a deliberately invalid sentinel token, not a user secret. A readable response establishes browser reachability, not authentication. CORS varies by endpoint and origin and may change. Fetch errors cannot distinguish CORS, DNS, connectivity, and extension blocking. There is no proxy, `no-cors` workaround, or browser-security bypass. A backend-free app cannot force a provider to permit browser requests.
+Neon and Cloudflare offer an optional browser capability check before accepting a new credential. This uses a deliberately invalid sentinel token, not a user secret. A readable response establishes browser reachability, not authentication. CORS varies by endpoint and origin and may change. Fetch errors cannot distinguish CORS, DNS, connectivity, and extension blocking. There is no proxy, `no-cors` workaround, or browser-security bypass. A backend-free app cannot force a provider to permit browser requests.
 
 These are snapshots, not uptime probes. A READY deployment does not establish application health, an active zone does not establish edge health, and a listed Neon project does not establish compute health. Pagination is deliberately bounded to 20 items and disclosed in each provider card. The MVP does not include billing, runtime logs, traffic, SQL access, notifications, historical charts, or complete resource inventory.
 

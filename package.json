@@ -4,6 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "server": "node --env-file=.env server/index.mjs",
+    "test:server": "node --test server/data-check.mjs",
     "dev": "vite --host 127.0.0.1",
     "build": "node scripts/publish.mjs build",
     "build:pages": "node scripts/publish.mjs build --target github-pages",
@@ -14,6 +16,8 @@
     "check": "tsc -b && vitest run"
   },
   "dependencies": {
+    "jose": "^6.2.13",
+    "pg": "^8.23.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

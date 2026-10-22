@@ -27,6 +27,7 @@ self.addEventListener('activate', event => event.waitUntil(caches.keys().then(ke
 })));
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+  if (url.pathname.startsWith('/api/')) return;
   if (event.request.method !== 'GET' || url.origin !== self.location.origin || !url.pathname.startsWith(BASE) || event.request.headers.has('authorization')) return;
   if (event.request.mode === 'navigate') {
     event.respondWith(caches.open(CACHE).then(cache => cache.match(BASE + 'index.html', { ignoreVary: true })).then(response => response || fetch(event.request)));
@@ -40,7 +41,7 @@ self.addEventListener('fetch', event => {
   };
 }
 
-export default defineConfig({ plugins: [react(), appShell(), {
+export default defineConfig({ server: { proxy: { '/api': 'http://127.0.0.1:3001' } }, plugins: [react(), appShell(), {
   name: 'stackpulse-dev-csp',
   // Vite injects an inline React refresh preamble in development only.
   transformIndexHtml(html, context) {

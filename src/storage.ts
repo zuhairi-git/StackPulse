@@ -1,7 +1,8 @@
 import { defaultWorkspaceId, type Connection, type Secret, type Snapshot, type Workspace } from './model';
+import { api, cloudAccount, session } from './account';
 function database(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('stackpulse', 3);
+    const request = indexedDB.open(cloudAccount() ? 'stackpulse-account-' + session.user!.email : 'stackpulse', 3);
     request.onupgradeneeded = () => {
       for (const [name, keyPath] of [['connections', 'id'], ['snapshots', 'connectionId']]) {
         if (!request.result.objectStoreNames.contains(name)) { request.result.createObjectStore(name, { keyPath }); continue; }
@@ -30,6 +31,15 @@ function database(): Promise<IDBDatabase> {
   });
 }
 export async function all<T>(store: 'connections' | 'snapshots' | 'workspaces'): Promise<T[]> {
+  if (store === 'connections' && cloudAccount()) {
+    const rows = await api<Connection[]>('connections');
+    const db = await database();
+    const assignments = await new Promise<Connection[]>((resolve, reject) => {
+      const tx = db.transaction('connections'); const request = tx.objectStore('connections').getAll();
+      tx.oncomplete = () => { db.close(); resolve(request.result); }; tx.onerror = () => { db.close(); reject(new Error('Could not read workspace assignments.')); };
+    });
+    return rows.map(row => ({ ...row, workspaceId: assignments.find(c => c.id === row.id)?.workspaceId || defaultWorkspaceId })) as T[];
+  }
   const db = await database();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store); const request = tx.objectStore(store).getAll();
@@ -55,6 +65,8 @@ export async function saveWorkspace(workspace: Workspace) {
   });
 }
 export async function moveConnection(connectionId: string, workspaceId: string): Promise<Connection> {
+  const cloudConnection = cloudAccount() ? (await api<Connection[]>('connections')).find(c => c.id === connectionId) : undefined;
+  if (cloudAccount() && !cloudConnection) throw new Error('Connection no longer exists.');
   const db = await database();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(['connections', 'workspaces'], 'readwrite');
@@ -64,9 +76,9 @@ export async function moveConnection(connectionId: string, workspaceId: string):
       if (!target.result) { tx.abort(); return; }
       const request = tx.objectStore('connections').get(connectionId);
       request.onsuccess = () => {
-        if (!request.result) { tx.abort(); return; }
-        moved = { ...request.result, workspaceId };
-        tx.objectStore('connections').put(moved);
+        if (!request.result && !cloudConnection) { tx.abort(); return; }
+        moved = { ...request.result, ...cloudConnection, workspaceId };
+        tx.objectStore('connections').put(cloudAccount() ? { id: connectionId, workspaceId } : moved);
       };
     };
     tx.oncomplete = () => { db.close(); resolve(moved); };
@@ -83,16 +95,18 @@ export async function save(value: Connection | Snapshot, store: 'connections' | 
   });
 }
 export async function saveConnection(connection: Connection, resetSnapshot: boolean) {
+  if (cloudAccount()) await api('connections', 'PUT', connection);
   const db = await database();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(['connections', 'snapshots'], 'readwrite');
-    tx.objectStore('connections').put(connection);
+    tx.objectStore('connections').put(cloudAccount() ? { id: connection.id, workspaceId: connection.workspaceId } : connection);
     if (resetSnapshot) tx.objectStore('snapshots').delete(connection.id);
     tx.oncomplete = () => { db.close(); resolve(); };
     tx.onerror = tx.onabort = () => { db.close(); reject(new Error('Could not save connection.')); };
   });
 }
 export async function remove(connectionId: string) {
+  if (cloudAccount()) await api('connections/' + encodeURIComponent(connectionId), 'DELETE');
   const db = await database();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(['connections', 'snapshots'], 'readwrite');
