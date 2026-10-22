@@ -1,8 +1,8 @@
 export type Provider = 'vercel' | 'neon' | 'cloudflare';
 export type Resource = { id: string; name: string; detail: string; status: string; url?: string };
-export type Snapshot = { provider: Provider; at: number; resources: Resource[]; note: string };
+export type Snapshot = { connectionId: string; provider: Provider; accountName?: string; at: number; resources: Resource[]; note: string };
 export type Secret = { salt: string; iv: string; data: string };
-export type Connection = { provider: Provider; scope: string; mode: 'session' | 'encrypted' | 'plain'; secret?: Secret; token?: string };
+export type Connection = { id: string; label?: string; provider: Provider; scope: string; mode: 'session' | 'encrypted' | 'plain'; secret?: Secret; token?: string };
 export const providers: Provider[] = ['vercel', 'neon', 'cloudflare'];
 export const meta = {
   vercel: { name: 'Vercel', category: 'Deployments & hosting', description: 'Keep your latest deployments in sight.', dashboard: 'https://vercel.com/dashboard', docs: 'https://vercel.com/docs/rest-api/deployments/list-deployments', keys: 'https://vercel.com/account/settings/tokens', scope: 'Team / Organization ID (optional)', scopePlaceholder: 'team_…', scopeHelp: 'Use your Vercel Team ID from team settings. For a team-linked project, this is also called orgId in .vercel/project.json or VERCEL_ORG_ID in CI.', permission: 'Use a token scoped to the smallest team you need. Token privileges may include writes; StackPulse only issues GET requests.' },

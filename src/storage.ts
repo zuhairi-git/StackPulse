@@ -1,9 +1,19 @@
-import type { Connection, Provider, Secret, Snapshot } from './model';
+import type { Connection, Secret, Snapshot } from './model';
 function database(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('stackpulse', 1);
-    request.onupgradeneeded = () => { request.result.createObjectStore('connections', { keyPath: 'provider' }); request.result.createObjectStore('snapshots', { keyPath: 'provider' }); };
-    request.onsuccess = () => resolve(request.result);
+    const request = indexedDB.open('stackpulse', 2);
+    request.onupgradeneeded = () => {
+      for (const [name, keyPath] of [['connections', 'id'], ['snapshots', 'connectionId']]) {
+        if (!request.result.objectStoreNames.contains(name)) { request.result.createObjectStore(name, { keyPath }); continue; }
+        const old = request.transaction!.objectStore(name).getAll();
+        old.onsuccess = () => {
+          request.result.deleteObjectStore(name);
+          const store = request.result.createObjectStore(name, { keyPath });
+          for (const record of old.result) store.put({ ...record, [keyPath]: `legacy:${record.provider}` });
+        };
+      }
+    };
+    request.onsuccess = () => { request.result.onversionchange = () => request.result.close(); resolve(request.result); };
     request.onerror = () => reject(new Error('Device storage is unavailable. Check browser storage permissions.'));
   });
 }
@@ -24,11 +34,21 @@ export async function save(value: Connection | Snapshot, store: 'connections' | 
     tx.onabort = tx.onerror;
   });
 }
-export async function remove(provider: Provider) {
+export async function saveConnection(connection: Connection, resetSnapshot: boolean) {
   const db = await database();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(['connections', 'snapshots'], 'readwrite');
-    tx.objectStore('connections').delete(provider); tx.objectStore('snapshots').delete(provider);
+    tx.objectStore('connections').put(connection);
+    if (resetSnapshot) tx.objectStore('snapshots').delete(connection.id);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = tx.onabort = () => { db.close(); reject(new Error('Could not save connection.')); };
+  });
+}
+export async function remove(connectionId: string) {
+  const db = await database();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(['connections', 'snapshots'], 'readwrite');
+    tx.objectStore('connections').delete(connectionId); tx.objectStore('snapshots').delete(connectionId);
     tx.oncomplete = () => { db.close(); resolve(); };
     tx.onerror = () => { db.close(); reject(new Error('Could not remove connection.')); };
   });

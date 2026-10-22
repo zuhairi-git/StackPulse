@@ -1,8 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import 'fake-indexeddb/auto';
-import { encrypt, decrypt, all, save, remove } from '../src/storage';
+import { IDBFactory } from 'fake-indexeddb';
+import { encrypt, decrypt, all, save, saveConnection, remove } from '../src/storage';
 import { stale, type Connection, type Snapshot } from '../src/model';
 import { fetchSnapshot } from '../src/providers';
+afterEach(() => vi.unstubAllGlobals());
 describe('credential protection', () => {
   it('encrypts with unique randomness, unlocks correctly, and rejects wrong passphrases', async () => {
     const secret = await encrypt('sensitive-api-token', 'a long test passphrase');
@@ -14,18 +16,49 @@ describe('credential protection', () => {
   });
 });
 describe('device storage', () => {
+  beforeEach(() => vi.stubGlobal('indexedDB', new IDBFactory()));
   it('persists snapshots and independently deletes a provider with its credential', async () => {
-    await save({ provider: 'vercel', scope: '', mode: 'session' }, 'connections');
-    await save({ provider: 'neon', scope: '', mode: 'session' }, 'connections');
-    await save({ provider: 'vercel', at: 123, resources: [], note: 'test' }, 'snapshots');
+    await save({ id: 'vercel', provider: 'vercel', scope: '', mode: 'session' }, 'connections');
+    await save({ id: 'neon', provider: 'neon', scope: '', mode: 'session' }, 'connections');
+    await save({ connectionId: 'vercel', provider: 'vercel', at: 123, resources: [], note: 'test' }, 'snapshots');
     expect((await all<Snapshot>('snapshots'))[0].at).toBe(123);
     await remove('vercel'); expect(await all('snapshots')).toEqual([]);
     expect((await all<Connection>('connections')).map(c => c.provider)).toEqual(['neon']);
     await remove('neon');
   });
+  it('keeps two accounts on the same provider independent, including replacement and deletion', async () => {
+    const first: Connection = { id: 'work', provider: 'vercel', scope: 'team_work', mode: 'plain', token: 'work-token' };
+    const second: Connection = { id: 'personal', provider: 'vercel', scope: 'team_personal', mode: 'plain', token: 'personal-token' };
+    await saveConnection(first, true); await saveConnection(second, true);
+    for (const c of [first, second]) await save({ connectionId: c.id, provider: c.provider, at: 123, resources: [], note: c.scope, accountName: c.id }, 'snapshots');
+    await saveConnection({ ...first, label: 'Work' }, false);
+    expect(await all('snapshots')).toHaveLength(2);
+    await saveConnection({ ...first, scope: 'team_changed' }, true);
+    expect((await all<Snapshot>('snapshots')).map(s => s.connectionId)).toEqual(['personal']);
+    await remove('work');
+    expect(await all<Connection>('connections')).toEqual([second]);
+    expect((await all<Snapshot>('snapshots'))[0].accountName).toBe('personal');
+  });
+  it('upgrades existing credentials and snapshots without losing tokens or timestamps', async () => {
+    const secret = await encrypt('saved-token', 'migration passphrase');
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open('stackpulse', 1);
+      request.onupgradeneeded = () => {
+        request.result.createObjectStore('connections', { keyPath: 'provider' }).put({ provider: 'neon', scope: 'org-work', mode: 'encrypted', secret });
+        request.result.createObjectStore('snapshots', { keyPath: 'provider' }).put({ provider: 'neon', at: 123, resources: [], note: 'cached' });
+      };
+      request.onsuccess = () => { request.result.close(); resolve(); };
+      request.onerror = () => reject(request.error);
+    });
+    const [connection] = await all<Connection>('connections');
+    const [snapshot] = await all<Snapshot>('snapshots');
+    expect(connection.id).toBe('legacy:neon'); expect(snapshot.connectionId).toBe(connection.id);
+    expect(snapshot.at).toBe(123); expect(connection.scope).toBe('org-work');
+    expect(await decrypt(connection.secret!, 'migration passphrase')).toBe('saved-token');
+  });
 });
 describe('freshness', () => {
-  const s: Snapshot = { provider: 'vercel', at: 1000, resources: [], note: '' };
+  const s: Snapshot = { connectionId: 'test', provider: 'vercel', at: 1000, resources: [], note: '' };
   it('marks old, offline, or failed snapshots stale without changing their timestamp', () => {
     expect(stale(s, false, true, 2000)).toBe(false);
     expect(stale(s, false, true, 302000)).toBe(true);

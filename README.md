@@ -34,6 +34,10 @@ These are snapshots, not uptime probes. A READY deployment does not establish ap
 
 ## Credentials and local data
 
+- Add multiple independent accounts for any provider using **Add account**. Each connection has a stable local ID, separate credentials, snapshots, refresh status, and disconnect action. Existing single-provider connections are migrated automatically, preserving saved tokens and timestamps.
+- An optional local account label (for example, Personal or Work) distinguishes connections. Account names are fetched when permitted: Vercel uses the selected team or authenticated user, Neon uses organization details (or the token's available organizations), and Cloudflare uses account metadata in the first 20 listed zones. Connections covering multiple organizations/accounts are labeled accordingly when that is visible in the response. Empty or restricted responses may not expose a name; scope or a local connection ID provides a fallback.
+- Vercel and Neon name discovery adds up to one read-only management API request per connection refresh. Cloudflare reuses zone responses without an extra request. Name discovery failures do not turn a successful inventory read into an error. Requests and polling scale with the number of connected accounts. Account names and local labels are cached unencrypted alongside resource metadata.
+
 - Memory-only is the default. Connection metadata and snapshots persist, but the token is lost on reload or session lock. Re-enter it to reconnect.
 - Optional encrypted storage uses AES-256-GCM, a random 96-bit IV and 128-bit salt per save, and PBKDF2-SHA-256 with 310,000 iterations. Passphrases require 12 characters and are never persisted. Unlocking keeps the token in memory until lock/reload. There is no passphrase recovery.
 - Unencrypted IndexedDB token storage is an explicit third choice with an in-app disclosure. Locking the session cannot protect tokens saved in this mode.
