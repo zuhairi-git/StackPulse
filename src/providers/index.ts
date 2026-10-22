@@ -1,17 +1,12 @@
 import type { Provider, Snapshot } from '../model';
-import { vercel } from './vercel';
-import { neon } from './neon';
-import { cloudflare } from './cloudflare';
-import { accountName } from './account';
-const adapters = { vercel, neon, cloudflare };
+import { providerRegistry, type ProviderDefinition } from './registry';
 export async function fetchSnapshot(provider: Provider, token: string, scope: string, signal: AbortSignal, connectionId = `legacy:${provider}`): Promise<Snapshot> {
   try {
-    const result = await adapters[provider](token, scope, signal);
+    const adapter: ProviderDefinition = providerRegistry[provider];
+    const result = await adapter.fetch(token, scope, signal);
     // Name lookup has its own short timeout so it cannot discard a successful inventory read.
     const nameSignal = AbortSignal.any([signal, AbortSignal.timeout(3000)]);
-    const name = provider === 'cloudflare'
-      ? ('accountName' in result && typeof result.accountName === 'string' ? result.accountName : undefined)
-      : await accountName(provider, token, scope, nameSignal);
+    const name = result.accountName || await adapter.discoverName?.(token, scope, nameSignal).catch(() => undefined);
     return { connectionId, provider, ...result, accountName: name, at: Date.now() };
   }
   catch (error) {
@@ -21,7 +16,7 @@ export async function fetchSnapshot(provider: Provider, token: string, scope: st
   }
 }
 export async function checkBrowser(provider: Provider): Promise<boolean> {
-  const url = { vercel: 'https://api.vercel.com/v7/deployments?limit=1', neon: 'https://console.neon.tech/api/v2/projects?limit=1', cloudflare: 'https://api.cloudflare.com/client/v4/zones?per_page=1' }[provider];
+  const url = providerRegistry[provider].probeURL;
   // A deliberately invalid sentinel tests the Authorization preflight without a credential.
   const response = await fetch(url, { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store', headers: { Authorization: 'Bearer stackpulse-cors-probe-not-a-token' }, signal: AbortSignal.timeout(12000) });
   return response.status === 401 || response.status === 403 || response.ok;

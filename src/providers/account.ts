@@ -1,8 +1,7 @@
-import type { Provider } from '../model';
 import { items, object, read, text } from './http';
 
 // Name discovery is optional: restricted tokens can still refresh resources.
-export async function accountName(provider: Provider, token: string, scope: string, signal: AbortSignal): Promise<string | undefined> {
+export async function accountName(provider: 'vercel' | 'neon', token: string, scope: string, signal: AbortSignal): Promise<string | undefined> {
   try {
     if (provider === 'vercel') {
       const url = new URL(scope ? `https://api.vercel.com/v2/teams/${encodeURIComponent(scope)}` : 'https://api.vercel.com/v2/user');

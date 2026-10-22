@@ -11,3 +11,6 @@
 @media(max-width:540px){.refresh-toolbar{padding:15px}.refresh-preferences{gap:12px}.refresh-preferences select{max-width:100%}.provider-actions button{min-height:40px}}
 
 .account-name{overflow-wrap:anywhere;color:#b7ccef}.account-scope{display:block;overflow-wrap:anywhere;margin-bottom:12px;font-size:10px;color:#7f90ac}.provider-category{overflow-wrap:anywhere}.provider-body .resource-count{display:block}
+
+.integration-row{justify-content:flex-start}.integration-copy{flex:1;min-width:0}.integration-actions{display:flex;gap:10px;flex-wrap:wrap}.integration-actions [role="switch"][aria-checked="true"]{border-color:#376d5c;color:#85dfb7}.integration-row .provider-logo{flex-shrink:0}
+@media(max-width:540px){.integration-row{align-items:stretch}.integration-actions{width:100%}.integration-actions .button{flex:1}}

@@ -56,7 +56,11 @@ The service worker precaches only the built app shell and branded assets. It nev
 
 ## Structure and verification
 
+Settings → **Providers & integrations** lets you activate/deactivate supported platforms and add their accounts. Deactivation stops refresh requests and hides that provider's resources while retaining its saved connections and snapshots. Choices persist on this device. Future adapters are registered centrally and appear in Settings after an app update; see [Adding providers](docs/providers.md).
+
 - `src/providers/`: isolated provider adapters plus a shared GET-only request boundary and runtime response validation.
+- `src/providers/registry.ts`: typed provider catalog with metadata, inventory adapters, optional name discovery, and browser-check configuration. Provider IDs and UI listings derive from this registry.
+- `src/provider-settings.ts`: persisted provider activation preferences and selection of active connections/snapshots.
 - `src/storage.ts`: native IndexedDB transactions and Web Crypto encryption.
 - `src/model.ts`: shared types and freshness rules.
 - `src/App.tsx`: responsive overview, searchable snapshots, connections, settings, and accessible native dialogs.
