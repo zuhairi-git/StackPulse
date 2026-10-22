@@ -1,28 +1,76 @@
-import type { Connection, Secret, Snapshot } from './model';
+import { defaultWorkspaceId, type Connection, type Secret, type Snapshot, type Workspace } from './model';
 function database(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('stackpulse', 2);
+    const request = indexedDB.open('stackpulse', 3);
     request.onupgradeneeded = () => {
       for (const [name, keyPath] of [['connections', 'id'], ['snapshots', 'connectionId']]) {
         if (!request.result.objectStoreNames.contains(name)) { request.result.createObjectStore(name, { keyPath }); continue; }
-        const old = request.transaction!.objectStore(name).getAll();
+        const existing = request.transaction!.objectStore(name);
+        if (existing.keyPath === keyPath) {
+          if (name === 'connections') {
+            const cursor = existing.openCursor();
+            cursor.onsuccess = () => { const row = cursor.result; if (row) { row.update({ ...row.value, workspaceId: row.value.workspaceId || defaultWorkspaceId }); row.continue(); } };
+          }
+          continue;
+        }
+        const old = existing.getAll();
         old.onsuccess = () => {
           request.result.deleteObjectStore(name);
           const store = request.result.createObjectStore(name, { keyPath });
-          for (const record of old.result) store.put({ ...record, [keyPath]: `legacy:${record.provider}` });
+          for (const record of old.result) store.put({ ...record, [keyPath]: `legacy:${record.provider}`, ...(name === 'connections' ? { workspaceId: defaultWorkspaceId } : {}) });
         };
+      }
+      if (!request.result.objectStoreNames.contains('workspaces')) {
+        const store = request.result.createObjectStore('workspaces', { keyPath: 'id' });
+        store.put({ id: defaultWorkspaceId, name: 'Personal', createdAt: Date.now() });
       }
     };
     request.onsuccess = () => { request.result.onversionchange = () => request.result.close(); resolve(request.result); };
     request.onerror = () => reject(new Error('Device storage is unavailable. Check browser storage permissions.'));
   });
 }
-export async function all<T>(store: 'connections' | 'snapshots'): Promise<T[]> {
+export async function all<T>(store: 'connections' | 'snapshots' | 'workspaces'): Promise<T[]> {
   const db = await database();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store); const request = tx.objectStore(store).getAll();
     tx.oncomplete = () => { db.close(); resolve(request.result as T[]); };
     tx.onerror = () => { db.close(); reject(new Error('Could not read device storage.')); };
+  });
+}
+export async function saveWorkspace(workspace: Workspace) {
+  const name = workspace.name.trim();
+  if (!name || name.length > 60) throw new Error('Use a workspace name between 1 and 60 characters.');
+  const db = await database();
+  return new Promise<Workspace>((resolve, reject) => {
+    const tx = db.transaction('workspaces', 'readwrite');
+    const store = tx.objectStore('workspaces');
+    let error = 'Could not save workspace.';
+    const request = store.getAll();
+    request.onsuccess = () => {
+      if (request.result.some((w: Workspace) => w.id !== workspace.id && w.name.toLowerCase() === name.toLowerCase())) { error = 'A workspace with this name already exists.'; tx.abort(); return; }
+      store.put({ ...workspace, name });
+    };
+    tx.oncomplete = () => { db.close(); resolve({ ...workspace, name }); };
+    tx.onerror = tx.onabort = () => { db.close(); reject(new Error(error)); };
+  });
+}
+export async function moveConnection(connectionId: string, workspaceId: string): Promise<Connection> {
+  const db = await database();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(['connections', 'workspaces'], 'readwrite');
+    let moved: Connection;
+    const target = tx.objectStore('workspaces').get(workspaceId);
+    target.onsuccess = () => {
+      if (!target.result) { tx.abort(); return; }
+      const request = tx.objectStore('connections').get(connectionId);
+      request.onsuccess = () => {
+        if (!request.result) { tx.abort(); return; }
+        moved = { ...request.result, workspaceId };
+        tx.objectStore('connections').put(moved);
+      };
+    };
+    tx.oncomplete = () => { db.close(); resolve(moved); };
+    tx.onerror = tx.onabort = () => { db.close(); reject(new Error('Could not move account. Check the account and workspace still exist.')); };
   });
 }
 export async function save(value: Connection | Snapshot, store: 'connections' | 'snapshots') {

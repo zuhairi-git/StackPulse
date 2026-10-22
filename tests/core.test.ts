@@ -18,8 +18,8 @@ describe('credential protection', () => {
 describe('device storage', () => {
   beforeEach(() => vi.stubGlobal('indexedDB', new IDBFactory()));
   it('persists snapshots and independently deletes a provider with its credential', async () => {
-    await save({ id: 'vercel', provider: 'vercel', scope: '', mode: 'session' }, 'connections');
-    await save({ id: 'neon', provider: 'neon', scope: '', mode: 'session' }, 'connections');
+    await save({ id: 'vercel', workspaceId: 'personal', provider: 'vercel', scope: '', mode: 'session' }, 'connections');
+    await save({ id: 'neon', workspaceId: 'personal', provider: 'neon', scope: '', mode: 'session' }, 'connections');
     await save({ connectionId: 'vercel', provider: 'vercel', at: 123, resources: [], note: 'test' }, 'snapshots');
     expect((await all<Snapshot>('snapshots'))[0].at).toBe(123);
     await remove('vercel'); expect(await all('snapshots')).toEqual([]);
@@ -27,8 +27,8 @@ describe('device storage', () => {
     await remove('neon');
   });
   it('keeps two accounts on the same provider independent, including replacement and deletion', async () => {
-    const first: Connection = { id: 'work', provider: 'vercel', scope: 'team_work', mode: 'plain', token: 'work-token' };
-    const second: Connection = { id: 'personal', provider: 'vercel', scope: 'team_personal', mode: 'plain', token: 'personal-token' };
+    const first: Connection = { id: 'work', workspaceId: 'personal', provider: 'vercel', scope: 'team_work', mode: 'plain', token: 'work-token' };
+    const second: Connection = { id: 'personal', workspaceId: 'personal', provider: 'vercel', scope: 'team_personal', mode: 'plain', token: 'personal-token' };
     await saveConnection(first, true); await saveConnection(second, true);
     for (const c of [first, second]) await save({ connectionId: c.id, provider: c.provider, at: 123, resources: [], note: c.scope, accountName: c.id }, 'snapshots');
     await saveConnection({ ...first, label: 'Work' }, false);

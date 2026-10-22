@@ -2,6 +2,8 @@
 
 Settings → Providers & integrations lists the adapters bundled with the app. Users can activate or deactivate each platform and add multiple accounts. Existing platforms are active on first use. Activation preferences persist on the device. Deactivation cancels in-flight requests, excludes all of that platform's accounts from manual/automatic refresh and resource views, and preserves credentials and cached snapshots for reactivation.
 
+Accounts belong to a workspace. Adding an account uses the selected workspace; dashboard views and refreshes include only that workspace's active accounts. Provider activation remains global across workspaces. Keep connection IDs stable when moving accounts so credentials, tokens held in memory, and snapshots stay attached to the same account.
+
 To add a future integration:
 
 1. Add a GET-only inventory adapter under `src/providers/`, using `read()` from `http.ts`. Return validated resources, a note describing inventory/freshness limitations, and an optional account name. Keep pagination bounded and document it.

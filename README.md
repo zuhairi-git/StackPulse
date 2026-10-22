@@ -34,6 +34,10 @@ These are snapshots, not uptime probes. A READY deployment does not establish ap
 
 ## Credentials and local data
 
+- Workspaces group accounts by project, client, or team. Use the top-bar workspace selector or **Settings → Workspaces** to create, rename, or switch workspaces. Existing accounts migrate into **Personal** automatically. The selected workspace persists across reloads.
+- Dashboards, account lists, resource searches, timestamps, and manual/automatic refreshes use only the selected workspace. Switching cancels in-flight refreshes. In Settings, move an account to another workspace without changing its credential or snapshot. Provider activation and Auto/Manual preferences remain app-wide.
+- Workspace names and account assignments are stored locally in IndexedDB without encryption. Workspaces organize data in the same browser profile; they do not provide team sharing, synchronization, or security isolation.
+
 - Add multiple independent accounts for any provider using **Add account**. Each connection has a stable local ID, separate credentials, snapshots, refresh status, and disconnect action. Existing single-provider connections are migrated automatically, preserving saved tokens and timestamps.
 - An optional local account label (for example, Personal or Work) distinguishes connections. Account names are fetched when permitted: Vercel uses the selected team or authenticated user, Neon uses organization details (or the token's available organizations), and Cloudflare uses account metadata in the first 20 listed zones. Connections covering multiple organizations/accounts are labeled accordingly when that is visible in the response. Empty or restricted responses may not expose a name; scope or a local connection ID provides a fallback.
 - Vercel and Neon name discovery adds up to one read-only management API request per connection refresh. Cloudflare reuses zone responses without an extra request. Name discovery failures do not turn a successful inventory read into an error. Requests and polling scale with the number of connected accounts. Account names and local labels are cached unencrypted alongside resource metadata.
@@ -61,6 +65,7 @@ Settings → **Providers & integrations** lets you activate/deactivate supported
 - `src/providers/`: isolated provider adapters plus a shared GET-only request boundary and runtime response validation.
 - `src/providers/registry.ts`: typed provider catalog with metadata, inventory adapters, optional name discovery, and browser-check configuration. Provider IDs and UI listings derive from this registry.
 - `src/provider-settings.ts`: persisted provider activation preferences and selection of active connections/snapshots.
+- `src/workspaces.ts`: persisted workspace selection and account/snapshot grouping; `src/storage.ts` migrates older stores into Personal without changing credentials or snapshot timestamps.
 - `src/storage.ts`: native IndexedDB transactions and Web Crypto encryption.
 - `src/model.ts`: shared types and freshness rules.
 - `src/App.tsx`: responsive overview, searchable snapshots, connections, settings, and accessible native dialogs.
