@@ -1,8 +1,8 @@
 
 const BASE = "/StackPulse/";
 const PREFIX = "stackpulse-shell-11b2703c0709-";
-const CACHE = PREFIX + '9de1a1cf7b52';
-const FILES = ["/StackPulse/","/StackPulse/index.html","/StackPulse/icon.svg","/StackPulse/manifest.webmanifest","/StackPulse/icons/icon-192.png","/StackPulse/icons/icon-512.png","/StackPulse/icons/maskable-512.png","/StackPulse/icons/apple-touch-icon.png","/StackPulse/assets/index-D1R2iEAZ.css","/StackPulse/assets/index-Bw2OuNFx.js"];
+const CACHE = PREFIX + 'd4bb7dcd0c3d';
+const FILES = ["/StackPulse/","/StackPulse/index.html","/StackPulse/icon.svg","/StackPulse/manifest.webmanifest","/StackPulse/icons/icon-192.png","/StackPulse/icons/icon-512.png","/StackPulse/icons/maskable-512.png","/StackPulse/icons/apple-touch-icon.png","/StackPulse/assets/index-8CjTHyyA.css","/StackPulse/assets/index-CwgPGhsT.js"];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES))));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => {
   // Keep the previous shell's immutable assets for navigations that straddle activation.
