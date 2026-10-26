@@ -1,0 +1,14 @@
+.ds-icon.fa-duotone {
+  --fa-family: var(--ds-icon-family, 'StackPulse-duotone-thin');
+  --fa-style: var(--ds-icon-weight, 100);
+  position: relative;
+  flex-shrink: 0;
+  line-height: 1;
+  text-align: center;
+  vertical-align: middle;
+  letter-spacing: normal;
+}
+.ds-icon.fa-duotone::before { position: absolute; inset: 0; color: var(--fa-primary-color, currentColor); opacity: var(--fa-primary-opacity, 1); }
+.ds-icon.fa-duotone::after { color: var(--fa-secondary-color, currentColor); opacity: var(--fa-secondary-opacity, .4); }
+.provider-logo .ds-icon { max-width: 100%; max-height: 100%; }
+

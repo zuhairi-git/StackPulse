@@ -1,0 +1,27 @@
+:root {
+  --ds-font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ds-font-size-body: 14px;
+  --ds-font-size-label: 12px;
+  --ds-font-size-heading: 30px;
+
+  --ds-background: #0a101c;
+  --ds-surface: #0d1625;
+  --ds-surface-raised: #111b2c;
+  --ds-text: #e9edf5;
+  --ds-muted: #818da4;
+  --ds-border: #202a3c;
+  --ds-accent: #759dff;
+  --ds-primary: #467aff;
+  --ds-success: #60c7a0;
+  --ds-warning: #d8ad65;
+  --ds-danger: #e99e9e;
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-6: 24px;
+  --ds-space-8: 32px;
+  --ds-radius-sm: 4px;
+  --ds-radius-md: 8px;
+  --ds-radius-lg: 12px;
+}
